@@ -1,0 +1,194 @@
+{
+  "entities": {
+    "HunterProfile": {
+      "title": "HunterProfile",
+      "description": "Hunter user progression, stats, rank, and spiritual inventory",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Unique user ID matching auth.uid"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Display name of the Hunter"
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 150,
+          "description": "User email address"
+        },
+        "spiritualTitle": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Honorific hunter title"
+        },
+        "hunterRank": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Rank from Rang E to Chasseur National"
+        },
+        "avatar": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Avatar URL or preset ID"
+        },
+        "conversionDate": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "Spiritual awakening date"
+        },
+        "level": {
+          "type": "number",
+          "description": "Current hunter level"
+        },
+        "currentXp": {
+          "type": "number",
+          "description": "Current XP within current level"
+        },
+        "totalXp": {
+          "type": "number",
+          "description": "Accumulated lifetime XP"
+        },
+        "prayerMinutesToday": {
+          "type": "number",
+          "description": "Prayer minutes completed today"
+        },
+        "bibleChaptersToday": {
+          "type": "number",
+          "description": "Bible chapters read today"
+        },
+        "fastingDaysStreak": {
+          "type": "number",
+          "description": "Consecutive fasting streak"
+        },
+        "generalViceStreak": {
+          "type": "number",
+          "description": "Overall vice resistance streak in days"
+        },
+        "quests": {
+          "type": "array",
+          "description": "Active and completed quests for this hunter"
+        },
+        "vices": {
+          "type": "array",
+          "description": "Shadow army and resisted vices"
+        },
+        "skills": {
+          "type": "array",
+          "description": "Unlocked spiritual skills and gifts"
+        },
+        "dungeons": {
+          "type": "array",
+          "description": "Ethereal gates and challenges"
+        },
+        "badges": {
+          "type": "array",
+          "description": "Unlocked celestial badges"
+        },
+        "inventory": {
+          "type": "array",
+          "description": "Celestial arsenal, verses and prayers"
+        },
+        "appearance": {
+          "type": "object",
+          "description": "UI theme, fonts and accent color settings"
+        },
+        "weeklyReports": {
+          "type": "array",
+          "description": "Historical weekly reports and sunday spiritual evaluations"
+        },
+        "updatedAt": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "ISO timestamp of last update"
+        }
+      },
+      "required": ["id", "name", "email", "hunterRank", "level", "currentXp", "totalXp"]
+    },
+    "WeeklySpiritualReport": {
+      "title": "WeeklySpiritualReport",
+      "description": "Weekly spiritual progress summary generated on Sundays",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Unique report ID"
+        },
+        "userId": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Owner hunter user ID"
+        },
+        "weekNumber": {
+          "type": "number",
+          "description": "Calendar week number"
+        },
+        "year": {
+          "type": "number",
+          "description": "Report year"
+        },
+        "startDate": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "Start date of week (Monday)"
+        },
+        "endDate": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "End date of week (Sunday)"
+        },
+        "totalPrayerMinutes": {
+          "type": "number",
+          "description": "Total prayer minutes this week"
+        },
+        "totalBibleChapters": {
+          "type": "number",
+          "description": "Total bible chapters read this week"
+        },
+        "totalQuestsCompleted": {
+          "type": "number",
+          "description": "Total quests completed this week"
+        },
+        "totalXpGained": {
+          "type": "number",
+          "description": "Total XP gained this week"
+        },
+        "weeklyGrade": {
+          "type": "string",
+          "maxLength": 10,
+          "description": "Evaluated weekly rank grade (S+, S, A, B, C)"
+        },
+        "weeklyEvaluationTitle": {
+          "type": "string",
+          "maxLength": 150,
+          "description": "Title granted by the system for the week"
+        },
+        "weeklyCommentary": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Prophetic encouragement for the week"
+        },
+        "generatedAt": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Timestamp when report was generated"
+        }
+      },
+      "required": ["id", "userId", "weekNumber", "year", "totalPrayerMinutes", "totalQuestsCompleted"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "HunterProfile",
+      "description": "Private profile and game progression data for each authenticated Hunter"
+    },
+    "/users/{userId}/weeklyReports/{reportId}": {
+      "schema": "WeeklySpiritualReport",
+      "description": "Weekly spiritual progress summary records for the Hunter"
+    }
+  }
+}

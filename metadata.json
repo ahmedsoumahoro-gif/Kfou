@@ -1,0 +1,6 @@
+{
+  "name": "BloomVerse - Spiritual Leveling System",
+  "description": "PWA de gamification spirituelle chrétienne inspirée de Solo Leveling pour progresser dans la foi, accomplir des quêtes divines et triompher des vices.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Public connection test endpoint required by platform verification
+    match /test/{docId} {
+      allow get: if true;
+    }
+
+    // Security helpers
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidHunterProfile(data, userId) {
+      return data.id == userId
+        && data.name is string && data.name.size() <= 100
+        && data.email is string && data.email.size() <= 150
+        && data.hunterRank is string && data.hunterRank.size() <= 50
+        && data.level is number && data.level >= 1
+        && data.currentXp is number && data.currentXp >= 0
+        && data.totalXp is number && data.totalXp >= 0;
+    }
+
+    function isValidWeeklyReport(data, userId) {
+      return data.userId == userId
+        && data.id is string && data.id.size() <= 128
+        && data.weekNumber is number
+        && data.year is number
+        && data.totalPrayerMinutes is number
+        && data.totalQuestsCompleted is number;
+    }
+
+    // Private Hunter profile and state storage
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidId(userId) && isValidHunterProfile(incoming(), userId);
+      allow update: if isOwner(userId) && isValidId(userId) && isValidHunterProfile(incoming(), userId) && incoming().id == existing().id;
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      // Subcollection for Sunday Weekly Reports
+      match /weeklyReports/{reportId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(reportId);
+        allow list: if isOwner(userId) && isValidId(userId);
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(reportId) && isValidWeeklyReport(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(reportId) && isValidWeeklyReport(incoming(), userId) && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(reportId);
+      }
+    }
+  }
+}

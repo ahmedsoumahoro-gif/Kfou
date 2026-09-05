@@ -1,0 +1,533 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-hud: 'Rajdhani', sans-serif;
+    --font-biblical: 'Cinzel', serif;
+    --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --base-font-size: 16px;
+    --accent-color: #38bdf8;
+    --accent-glow: rgba(56, 189, 248, 0.4);
+    --accent-border: rgba(56, 189, 248, 0.5);
+    --accent-bg: rgba(56, 189, 248, 0.12);
+  }
+
+  html {
+    font-size: var(--base-font-size);
+  }
+
+  body {
+    background-color: #06080e;
+    color: #f1f5f9;
+    font-family: var(--font-body);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+}
+
+/* Accent Color Reactive Classes */
+.text-accent {
+  color: var(--accent-color) !important;
+}
+
+.bg-accent {
+  background-color: var(--accent-color) !important;
+}
+
+.border-accent {
+  border-color: var(--accent-border) !important;
+}
+
+.glow-accent {
+  text-shadow: 0 0 10px var(--accent-glow), 0 0 20px var(--accent-glow);
+}
+
+/* Font Families Mapping */
+.font-hud {
+  font-family: var(--font-hud) !important;
+}
+
+.font-biblical {
+  font-family: var(--font-biblical) !important;
+}
+
+.font-sans {
+  font-family: var(--font-body) !important;
+}
+
+/* Dynamic Font Attributes */
+[data-font-hud="rajdhani"] { --font-hud: 'Rajdhani', sans-serif; }
+[data-font-hud="cinzel"] { --font-hud: 'Cinzel', serif; }
+[data-font-hud="montserrat"] { --font-hud: 'Montserrat', sans-serif; }
+[data-font-hud="playfair"] { --font-hud: 'Playfair Display', serif; }
+[data-font-hud="oswald"] { --font-hud: 'Oswald', sans-serif; }
+
+[data-font-body="jakarta"] { --font-body: 'Plus Jakarta Sans', sans-serif; }
+[data-font-body="inter"] { --font-body: 'Inter', sans-serif; }
+[data-font-body="merriweather"] { --font-body: 'Merriweather', serif; }
+[data-font-body="outfit"] { --font-body: 'Outfit', sans-serif; }
+
+[data-font-scale="normal"] { --base-font-size: 16px; }
+[data-font-scale="large"] { --base-font-size: 17.5px; }
+[data-font-scale="xlarge"] { --base-font-size: 19px; }
+
+/* Solo Leveling System Window Style (Default Dark) */
+.system-window {
+  background: rgba(11, 15, 25, 0.85);
+  border: 1px solid rgba(79, 143, 255, 0.3);
+  box-shadow: 0 0 20px rgba(79, 143, 255, 0.1), inset 0 0 15px rgba(79, 143, 255, 0.05);
+  backdrop-filter: blur(12px);
+  position: relative;
+  transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.system-window-gold {
+  background: rgba(18, 15, 10, 0.9);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.15), inset 0 0 15px rgba(251, 191, 36, 0.05);
+  backdrop-filter: blur(12px);
+}
+
+.system-window-danger {
+  background: rgba(22, 10, 12, 0.9);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.15), inset 0 0 15px rgba(239, 68, 68, 0.05);
+  backdrop-filter: blur(12px);
+}
+
+/* Corner System Brackets */
+.system-corner::before,
+.system-corner::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  pointer-events: none;
+}
+
+.system-corner::before {
+  top: -1px;
+  left: -1px;
+  border-top: 2px solid #4f8fff;
+  border-left: 2px solid #4f8fff;
+}
+
+.system-corner::after {
+  bottom: -1px;
+  right: -1px;
+  border-bottom: 2px solid #4f8fff;
+  border-right: 2px solid #4f8fff;
+}
+
+/* Glowing text effects */
+.glow-blue {
+  text-shadow: 0 0 10px rgba(79, 143, 255, 0.8), 0 0 20px rgba(79, 143, 255, 0.4);
+}
+
+.glow-gold {
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.8), 0 0 20px rgba(251, 191, 36, 0.4);
+}
+
+.glow-crimson {
+  text-shadow: 0 0 10px rgba(239, 68, 68, 0.8), 0 0 20px rgba(239, 68, 68, 0.4);
+}
+
+/* ========================================================================= */
+/* THEME 1: DIVINE LIGHT (Lumière Céleste / Mode Clair Propre & Lumineux)    */
+/* ========================================================================= */
+[data-theme="divine-light"] body {
+  background-color: #f4f6f9 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="divine-light"] .min-h-screen {
+  background-color: #f4f6f9 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="divine-light"] header {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-bottom-color: #e2e8f0 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="divine-light"] nav {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="divine-light"] .system-window {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 4px 20px rgba(14, 165, 233, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  color: #0f172a !important;
+}
+
+[data-theme="divine-light"] .system-window-gold {
+  background: #fffdf7 !important;
+  border: 1px solid #fde68a !important;
+  box-shadow: 0 4px 20px rgba(217, 119, 6, 0.1) !important;
+}
+
+[data-theme="divine-light"] .system-window-danger {
+  background: #fff5f5 !important;
+  border: 1px solid #fecaca !important;
+}
+
+[data-theme="divine-light"] .system-corner::before,
+[data-theme="divine-light"] .system-corner::after {
+  border-color: #0284c7 !important;
+}
+
+[data-theme="divine-light"] .glow-blue {
+  text-shadow: 0 0 12px rgba(2, 132, 199, 0.4);
+}
+
+/* Overriding hardcoded dark background classes in light mode */
+[data-theme="divine-light"] .bg-\[\#090d16\],
+[data-theme="divine-light"] .bg-\[\#080d12\],
+[data-theme="divine-light"] .bg-\[\#080d12\]\/70,
+[data-theme="divine-light"] .bg-\[\#07090e\],
+[data-theme="divine-light"] .bg-\[\#07090e\]\/95,
+[data-theme="divine-light"] .bg-\[\#090c14\]\/80 {
+  background-color: #ffffff !important;
+}
+
+[data-theme="divine-light"] .bg-slate-950,
+[data-theme="divine-light"] .bg-slate-950\/80,
+[data-theme="divine-light"] .bg-slate-950\/90,
+[data-theme="divine-light"] .bg-slate-950\/50,
+[data-theme="divine-light"] .bg-slate-950\/60,
+[data-theme="divine-light"] .bg-slate-950\/40,
+[data-theme="divine-light"] .bg-slate-950\/30 {
+  background-color: #f1f5f9 !important;
+}
+
+[data-theme="divine-light"] .bg-slate-900,
+[data-theme="divine-light"] .bg-slate-900\/80,
+[data-theme="divine-light"] .bg-slate-900\/60,
+[data-theme="divine-light"] .bg-slate-900\/50 {
+  background-color: #e2e8f0 !important;
+}
+
+[data-theme="divine-light"] .bg-sky-950,
+[data-theme="divine-light"] .bg-sky-950\/40,
+[data-theme="divine-light"] .bg-sky-950\/50,
+[data-theme="divine-light"] .bg-sky-950\/60,
+[data-theme="divine-light"] .bg-sky-950\/80 {
+  background-color: #e0f2fe !important;
+}
+
+[data-theme="divine-light"] .bg-purple-950,
+[data-theme="divine-light"] .bg-purple-950\/40,
+[data-theme="divine-light"] .bg-purple-950\/50 {
+  background-color: #f3e8ff !important;
+}
+
+[data-theme="divine-light"] .bg-red-950,
+[data-theme="divine-light"] .bg-red-950\/40,
+[data-theme="divine-light"] .bg-red-950\/50 {
+  background-color: #fee2e2 !important;
+}
+
+[data-theme="divine-light"] .bg-emerald-950,
+[data-theme="divine-light"] .bg-emerald-950\/50,
+[data-theme="divine-light"] .bg-emerald-950\/60 {
+  background-color: #dcfce7 !important;
+}
+
+[data-theme="divine-light"] .text-white {
+  color: #0f172a !important;
+}
+
+[data-theme="divine-light"] .text-slate-100 {
+  color: #1e293b !important;
+}
+
+[data-theme="divine-light"] .text-slate-200 {
+  color: #334155 !important;
+}
+
+[data-theme="divine-light"] .text-slate-300 {
+  color: #475569 !important;
+}
+
+[data-theme="divine-light"] .text-slate-400 {
+  color: #64748b !important;
+}
+
+[data-theme="divine-light"] .text-sky-300 {
+  color: #0369a1 !important;
+}
+
+[data-theme="divine-light"] .text-purple-300 {
+  color: #7e22ce !important;
+}
+
+[data-theme="divine-light"] .text-emerald-300 {
+  color: #15803d !important;
+}
+
+[data-theme="divine-light"] .text-amber-300 {
+  color: #b45309 !important;
+}
+
+[data-theme="divine-light"] .border-slate-800,
+[data-theme="divine-light"] .border-slate-800\/80,
+[data-theme="divine-light"] .border-slate-900,
+[data-theme="divine-light"] .border-slate-700 {
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="divine-light"] .border-sky-950,
+[data-theme="divine-light"] .border-sky-950\/60,
+[data-theme="divine-light"] .border-sky-900,
+[data-theme="divine-light"] .border-sky-900\/30,
+[data-theme="divine-light"] .border-sky-900\/40,
+[data-theme="divine-light"] .border-sky-900\/60 {
+  border-color: #bae6fd !important;
+}
+
+/* ========================================================================= */
+/* THEME 2: SOLAR PARCHMENT (Parchemin Sacré / Mode Sépia Doré)              */
+/* ========================================================================= */
+[data-theme="solar-parchment"] body {
+  background-color: #f7f3eb !important;
+  color: #292524 !important;
+}
+
+[data-theme="solar-parchment"] .min-h-screen {
+  background-color: #f7f3eb !important;
+  color: #292524 !important;
+}
+
+[data-theme="solar-parchment"] header {
+  background-color: rgba(251, 247, 239, 0.95) !important;
+  border-bottom-color: #e7dfd3 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="solar-parchment"] nav {
+  background-color: rgba(251, 247, 239, 0.95) !important;
+  border-color: #e7dfd3 !important;
+}
+
+[data-theme="solar-parchment"] .system-window {
+  background: #ffffff !important;
+  border: 1px solid #e7dfd3 !important;
+  box-shadow: 0 4px 20px rgba(180, 83, 9, 0.07) !important;
+  color: #292524 !important;
+}
+
+[data-theme="solar-parchment"] .system-corner::before,
+[data-theme="solar-parchment"] .system-corner::after {
+  border-color: #b45309 !important;
+}
+
+[data-theme="solar-parchment"] .bg-\[\#090d16\],
+[data-theme="solar-parchment"] .bg-\[\#080d12\],
+[data-theme="solar-parchment"] .bg-\[\#07090e\],
+[data-theme="solar-parchment"] .bg-\[\#07090e\]\/95 {
+  background-color: #ffffff !important;
+}
+
+[data-theme="solar-parchment"] .bg-slate-950,
+[data-theme="solar-parchment"] .bg-slate-950\/80,
+[data-theme="solar-parchment"] .bg-slate-950\/90 {
+  background-color: #f2ece0 !important;
+}
+
+[data-theme="solar-parchment"] .bg-slate-900,
+[data-theme="solar-parchment"] .bg-slate-900\/60 {
+  background-color: #e8e0d1 !important;
+}
+
+[data-theme="solar-parchment"] .text-white {
+  color: #292524 !important;
+}
+
+[data-theme="solar-parchment"] .text-slate-100 {
+  color: #44403c !important;
+}
+
+[data-theme="solar-parchment"] .text-slate-200 {
+  color: #57534e !important;
+}
+
+[data-theme="solar-parchment"] .text-slate-300,
+[data-theme="solar-parchment"] .text-slate-400 {
+  color: #78716c !important;
+}
+
+[data-theme="solar-parchment"] .border-slate-800,
+[data-theme="solar-parchment"] .border-slate-900,
+[data-theme="solar-parchment"] .border-sky-900 {
+  border-color: #e7dfd3 !important;
+}
+
+/* ========================================================================= */
+/* THEME 3: MIDNIGHT BLUE (Bleu Nuit Céleste / Cobalt Royal)                */
+/* ========================================================================= */
+[data-theme="midnight-blue"] body {
+  background-color: #070d1e !important;
+  color: #f1f5f9 !important;
+}
+
+[data-theme="midnight-blue"] .min-h-screen {
+  background-color: #070d1e !important;
+}
+
+[data-theme="midnight-blue"] header {
+  background-color: rgba(9, 17, 40, 0.95) !important;
+  border-bottom-color: #1e3a70 !important;
+}
+
+[data-theme="midnight-blue"] nav {
+  background-color: rgba(9, 17, 40, 0.95) !important;
+  border-color: #1e3a70 !important;
+}
+
+[data-theme="midnight-blue"] .system-window {
+  background: rgba(13, 23, 54, 0.9) !important;
+  border: 1px solid rgba(59, 130, 246, 0.4) !important;
+  box-shadow: 0 0 25px rgba(59, 130, 246, 0.15) !important;
+}
+
+[data-theme="midnight-blue"] .bg-\[\#090d16\] {
+  background-color: #0b1736 !important;
+}
+
+[data-theme="midnight-blue"] .bg-slate-950 {
+  background-color: #081126 !important;
+}
+
+/* ========================================================================= */
+/* THEME 4: CRIMSON GATE (Portail Écarlate / Sang Céleste & Braises)         */
+/* ========================================================================= */
+[data-theme="crimson-gate"] body {
+  background-color: #0d0608 !important;
+  color: #f1f5f9 !important;
+}
+
+[data-theme="crimson-gate"] .min-h-screen {
+  background-color: #0d0608 !important;
+}
+
+[data-theme="crimson-gate"] header {
+  background-color: rgba(22, 10, 13, 0.95) !important;
+  border-bottom-color: #4c111a !important;
+}
+
+[data-theme="crimson-gate"] nav {
+  background-color: rgba(22, 10, 13, 0.95) !important;
+  border-color: #4c111a !important;
+}
+
+[data-theme="crimson-gate"] .system-window {
+  background: rgba(25, 12, 16, 0.9) !important;
+  border: 1px solid rgba(239, 68, 68, 0.4) !important;
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.15) !important;
+}
+
+[data-theme="crimson-gate"] .bg-\[\#090d16\] {
+  background-color: #1a0b0e !important;
+}
+
+[data-theme="crimson-gate"] .bg-slate-950 {
+  background-color: #120709 !important;
+}
+
+/* ========================================================================= */
+/* THEME 5: EMERALD EDEN (Éden Céleste / Arbre de Vie)                       */
+/* ========================================================================= */
+[data-theme="emerald-eden"] body {
+  background-color: #040d09 !important;
+  color: #f1f5f9 !important;
+}
+
+[data-theme="emerald-eden"] .min-h-screen {
+  background-color: #040d09 !important;
+}
+
+[data-theme="emerald-eden"] header {
+  background-color: rgba(8, 24, 16, 0.95) !important;
+  border-bottom-color: #064e3b !important;
+}
+
+[data-theme="emerald-eden"] nav {
+  background-color: rgba(8, 24, 16, 0.95) !important;
+  border-color: #064e3b !important;
+}
+
+[data-theme="emerald-eden"] .system-window {
+  background: rgba(10, 28, 19, 0.9) !important;
+  border: 1px solid rgba(16, 185, 129, 0.4) !important;
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.15) !important;
+}
+
+[data-theme="emerald-eden"] .bg-\[\#090d16\] {
+  background-color: #092014 !important;
+}
+
+[data-theme="emerald-eden"] .bg-slate-950 {
+  background-color: #06170e !important;
+}
+
+/* ========================================================================= */
+/* THEME 6: ROYAL AMETHYST (Sagesse Pourpre / Onction Majestueuse)           */
+/* ========================================================================= */
+[data-theme="royal-amethyst"] body {
+  background-color: #0c0715 !important;
+  color: #f1f5f9 !important;
+}
+
+[data-theme="royal-amethyst"] .min-h-screen {
+  background-color: #0c0715 !important;
+}
+
+[data-theme="royal-amethyst"] header {
+  background-color: rgba(19, 11, 32, 0.95) !important;
+  border-bottom-color: #4a1d75 !important;
+}
+
+[data-theme="royal-amethyst"] nav {
+  background-color: rgba(19, 11, 32, 0.95) !important;
+  border-color: #4a1d75 !important;
+}
+
+[data-theme="royal-amethyst"] .system-window {
+  background: rgba(22, 13, 38, 0.9) !important;
+  border: 1px solid rgba(168, 85, 247, 0.4) !important;
+  box-shadow: 0 0 25px rgba(168, 85, 247, 0.15) !important;
+}
+
+[data-theme="royal-amethyst"] .bg-\[\#090d16\] {
+  background-color: #170d2b !important;
+}
+
+[data-theme="royal-amethyst"] .bg-slate-950 {
+  background-color: #10081f !important;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
