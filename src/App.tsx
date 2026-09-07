@@ -21,6 +21,8 @@ import {
 } from './types';
 import {
   INITIAL_USER,
+  INITIAL_ZERO_USER,
+  createZeroHunterState,
   INITIAL_QUESTS,
   INITIAL_VICES,
   INITIAL_SKILLS,
@@ -45,10 +47,14 @@ import { LevelUpModal } from './components/LevelUpModal';
 import { AppearanceSettingsModal } from './components/AppearanceSettingsModal';
 import { ProfilePhotoModal } from './components/ProfilePhotoModal';
 import { AuthModal } from './components/AuthModal';
+import { AuthPortalView } from './components/AuthPortalView';
 import { PrayerAltarModal } from './components/PrayerAltarModal';
 import { ReminderModal } from './components/ReminderModal';
 import { WeeklySpiritualReport } from './components/WeeklySpiritualReport';
 import { MelodyPlayerWidget } from './components/MelodyPlayerWidget';
+import { BibleView } from './components/BibleView';
+import { WorshipView } from './components/WorshipView';
+import { Sparkles, Cloud } from 'lucide-react';
 import { playSystemSound } from './utils/audio';
 import { loadReminderSettings, saveReminderSettings, triggerReminderNotification } from './utils/notifications';
 import { logDailyActivity, isTodaySunday } from './utils/weeklyReport';
@@ -137,6 +143,7 @@ export const App: React.FC = () => {
 
   // User Account & Cloud Firebase State (Ready for Deployment)
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isCloudSyncing, setIsCloudSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | undefined>(() =>
@@ -211,7 +218,8 @@ export const App: React.FC = () => {
         setIsCloudSyncing(true);
         try {
           const cloudData = await fetchHunterFromCloud(fbUser.uid);
-          if (cloudData) {
+          if (cloudData && cloudData.user) {
+            // Existing user in Firestore: restore their authentic progression
             setUser(cloudData.user);
             if (cloudData.quests?.length) setQuests(cloudData.quests);
             if (cloudData.vices?.length) setVices(cloudData.vices);
@@ -224,23 +232,24 @@ export const App: React.FC = () => {
             setLastSyncedAt(syncTime);
             setStored('last_cloud_sync', syncTime);
           } else {
-            // First time this Google account connects: bootstrap cloud record
-            const freshHunter: HunterUser = {
-              ...user,
-              id: fbUser.uid,
-              name: fbUser.displayName || user.name,
-              email: fbUser.email || user.email,
-              avatar: fbUser.photoURL || user.avatar,
-            };
-            setUser(freshHunter);
+            // NEW USER: Initial zero state (Level 1, 0 XP, Rang E, 0 minutes prayer, empty progression)
+            const zeroState = createZeroHunterState(
+              fbUser.uid,
+              fbUser.displayName || 'Chasseur Novice',
+              fbUser.email || '',
+              fbUser.photoURL || ''
+            );
+            setUser(zeroState.user);
+            setQuests(zeroState.quests);
+            setVices(zeroState.vices);
+            setSkills(zeroState.skills);
+            setDungeons(zeroState.dungeons);
+            setBadges(zeroState.badges);
+            setInventory(zeroState.inventory);
+
+            // Immediately persist initial zero profile to Firestore database
             await saveHunterToCloud(fbUser.uid, {
-              user: freshHunter,
-              quests,
-              vices,
-              skills,
-              dungeons,
-              badges,
-              inventory,
+              ...zeroState,
               appearance: settings,
             });
             const now = new Date().toISOString();
@@ -251,7 +260,20 @@ export const App: React.FC = () => {
           console.warn('Initial cloud fetch error:', err);
         } finally {
           setIsCloudSyncing(false);
+          setAuthLoading(false);
         }
+      } else {
+        // User logged out: clear state and return to zero
+        const zeroState = createZeroHunterState('', 'Chasseur Novice', '');
+        setUser(zeroState.user);
+        setQuests(zeroState.quests);
+        setVices(zeroState.vices);
+        setSkills(zeroState.skills);
+        setDungeons(zeroState.dungeons);
+        setBadges(zeroState.badges);
+        setInventory(zeroState.inventory);
+        setIsCloudSyncing(false);
+        setAuthLoading(false);
       }
     });
 
@@ -765,6 +787,29 @@ export const App: React.FC = () => {
     });
   };
 
+  // Bible Chapter Meditation Handler
+  const handleIncrementBibleChapter = () => {
+    setUser((prev) => ({
+      ...prev,
+      bibleChaptersToday: (prev.bibleChaptersToday || 0) + 1,
+    }));
+    addXp(30, 'Méditation de la Parole');
+    logDailyActivity({ bibleChapters: 1, xpGained: 30 });
+    unlockBadge('word_scholar');
+    setSystemAlert({
+      isOpen: true,
+      title: 'CHAPITRE DE LA PAROLE MÉDITÉ',
+      message: 'Votre esprit a été nourri de la vérité biblique. Vous grandissez dans la foi et la sanctification.',
+      rewardText: '+30 XP Spirituelle',
+      type: 'victory',
+    });
+  };
+
+  // Add Verse directly to Spiritual Inventory as Sword of the Spirit
+  const handleAddInventoryVerse = (item: Omit<InventoryItem, 'id' | 'createdAt'>) => {
+    handleAddItem(item);
+  };
+
   // Reset to Default Hunter State
   const handleResetData = () => {
     setUser(INITIAL_USER);
@@ -783,6 +828,37 @@ export const App: React.FC = () => {
   };
 
   const uncompletedQuestsCount = quests.filter((q) => q.isDaily && !q.completedToday).length;
+
+  // 1. Loading State while checking Firebase Auth session
+  if (authLoading) {
+    return (
+      <div className="min-h-screen w-full bg-[#06080e] flex flex-col items-center justify-center p-6 text-center text-slate-200 relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10 space-y-4 max-w-md mx-auto">
+          <div className="w-16 h-16 rounded-2xl bg-sky-950/80 border border-sky-400/50 flex items-center justify-center mx-auto shadow-[0_0_30px_rgba(56,189,248,0.3)]">
+            <Sparkles className="w-8 h-8 text-sky-400 animate-spin" style={{ animationDuration: '6s' }} />
+          </div>
+
+          <div className="inline-block px-3 py-1 rounded-full bg-sky-500/10 border border-sky-400/30 text-sky-400 text-xs font-hud font-bold tracking-widest uppercase">
+            [ SYSTÈME BLOOMVERSE • FIRESTORE INITIALISÉ ]
+          </div>
+
+          <h2 className="text-xl sm:text-2xl font-hud font-bold tracking-wider text-white">
+            CONNEXION AU SYSTÈME...
+          </h2>
+
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Vérification de votre session sécurisée et synchronisation avec la base de données cloud.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Authentication Gate: If NOT logged in, show AuthPortalView directly (NO DEMO MODE!)
+  if (!firebaseUser) {
+    return <AuthPortalView />;
+  }
 
   return (
     <div className="min-h-screen bg-[#06080e] text-slate-100 flex flex-col selection:bg-sky-500 selection:text-white">
@@ -831,6 +907,18 @@ export const App: React.FC = () => {
             isSimulatedSunday={isSimulatedSunday}
             onToggleSimulateSunday={() => setIsSimulatedSunday((prev) => !prev)}
           />
+        )}
+
+        {activeTab === 'bible' && (
+          <BibleView
+            user={user}
+            onIncrementBibleChapter={handleIncrementBibleChapter}
+            onAddInventoryVerse={handleAddInventoryVerse}
+          />
+        )}
+
+        {activeTab === 'worship' && (
+          <WorshipView />
         )}
 
         {activeTab === 'quests' && (
@@ -992,8 +1080,11 @@ export const App: React.FC = () => {
         }}
       />
 
-      {/* Adaptive Melodies Sound Player for Youth / Solo Leveling Quests */}
-      <MelodyPlayerWidget currentTab={activeTab} />
+      {/* Lecteur de Douces Mélodies d'Adoration Spirituelle */}
+      <MelodyPlayerWidget
+        currentTab={activeTab}
+        onOpenBible={() => setActiveTab('bible')}
+      />
     </div>
   );
 };

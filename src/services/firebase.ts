@@ -8,6 +8,7 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signInAnonymously,
   updateProfile,
   sendPasswordResetEmail,
 } from 'firebase/auth';
@@ -128,13 +129,33 @@ export interface HunterSavePayload {
   lastSyncedAt?: string;
 }
 
-// Sign in with Google Popup
-export async function loginWithGoogle(): Promise<FirebaseUser> {
+// Sign in with Google Popup (optionally binding the chosen Hunter pseudo)
+export async function loginWithGoogle(preferredPseudo?: string): Promise<FirebaseUser> {
   try {
     const result = await signInWithPopup(auth, googleProvider);
+    if (preferredPseudo && preferredPseudo.trim()) {
+      await updateProfile(result.user, {
+        displayName: preferredPseudo.trim(),
+      });
+    }
     return result.user;
   } catch (err: unknown) {
     console.error('Login error:', err);
+    throw err;
+  }
+}
+
+// Quick Hunter Pseudo Sign In (Anonymous Firebase Auth with custom Hunter Pseudo)
+export async function loginWithHunterPseudo(pseudo: string): Promise<FirebaseUser> {
+  try {
+    const cleanPseudo = pseudo.trim() || 'Chasseur Novice';
+    const userCredential = await signInAnonymously(auth);
+    await updateProfile(userCredential.user, {
+      displayName: cleanPseudo,
+    });
+    return userCredential.user;
+  } catch (err: unknown) {
+    console.error('Pseudo login error:', err);
     throw err;
   }
 }
@@ -189,6 +210,35 @@ export async function logoutHunter(): Promise<void> {
   await signOut(auth);
 }
 
+/**
+ * Recursively sanitizes objects and arrays for Firestore.
+ * Firestore throws a runtime error if ANY property is `undefined`.
+ * This function:
+ * - Omits keys whose value is undefined.
+ * - Deeply cleans nested objects and arrays.
+ * - Leaves null, numbers, strings, and booleans intact.
+ */
+export function cleanForFirestore<T>(data: T): T {
+  if (data === undefined) {
+    return null as unknown as T;
+  }
+  if (data === null || typeof data !== 'object') {
+    return data;
+  }
+  if (Array.isArray(data)) {
+    return data
+      .filter((item) => item !== undefined)
+      .map((item) => cleanForFirestore(item)) as unknown as T;
+  }
+  const result: Record<string, any> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) {
+      result[key] = cleanForFirestore(value);
+    }
+  }
+  return result as T;
+}
+
 // Save or sync complete Hunter progress to Firestore /users/{userId}
 export async function saveHunterToCloud(
   userId: string,
@@ -199,30 +249,31 @@ export async function saveHunterToCloud(
     const docRef = doc(db, 'users', userId);
     const dataToSave = {
       id: userId,
-      name: payload.user.name.slice(0, 100),
-      email: payload.user.email.slice(0, 150),
-      spiritualTitle: payload.user.spiritualTitle.slice(0, 100),
-      hunterRank: payload.user.hunterRank.slice(0, 50),
-      avatar: payload.user.avatar || '',
-      conversionDate: payload.user.conversionDate || new Date().toISOString().split('T')[0],
-      level: Number(payload.user.level) || 1,
-      currentXp: Number(payload.user.currentXp) || 0,
-      totalXp: Number(payload.user.totalXp) || 0,
-      prayerMinutesToday: Number(payload.user.prayerMinutesToday) || 0,
-      bibleChaptersToday: Number(payload.user.bibleChaptersToday) || 0,
-      fastingDaysStreak: Number(payload.user.fastingDaysStreak) || 0,
-      generalViceStreak: Number(payload.user.generalViceStreak) || 0,
-      quests: payload.quests,
-      vices: payload.vices,
-      skills: payload.skills,
-      dungeons: payload.dungeons,
-      badges: payload.badges,
-      inventory: payload.inventory,
-      appearance: payload.appearance,
+      name: (payload.user?.name || 'Chasseur Novice').slice(0, 100),
+      email: (payload.user?.email || '').slice(0, 150),
+      spiritualTitle: (payload.user?.spiritualTitle || 'Novice de la Grâce').slice(0, 100),
+      hunterRank: (payload.user?.hunterRank || 'Rang E').slice(0, 50),
+      avatar: payload.user?.avatar || 'shadow_monarch_cross',
+      conversionDate: payload.user?.conversionDate || new Date().toISOString().split('T')[0],
+      level: Number(payload.user?.level) || 1,
+      currentXp: Number(payload.user?.currentXp) || 0,
+      totalXp: Number(payload.user?.totalXp) || 0,
+      prayerMinutesToday: Number(payload.user?.prayerMinutesToday) || 0,
+      bibleChaptersToday: Number(payload.user?.bibleChaptersToday) || 0,
+      fastingDaysStreak: Number(payload.user?.fastingDaysStreak) || 0,
+      generalViceStreak: Number(payload.user?.generalViceStreak) || 0,
+      quests: payload.quests || [],
+      vices: payload.vices || [],
+      skills: payload.skills || [],
+      dungeons: payload.dungeons || [],
+      badges: payload.badges || [],
+      inventory: payload.inventory || [],
+      appearance: payload.appearance || {},
       updatedAt: new Date().toISOString(),
     };
 
-    await setDoc(docRef, dataToSave, { merge: true });
+    const sanitizedData = cleanForFirestore(dataToSave);
+    await setDoc(docRef, sanitizedData, { merge: true });
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
   }
@@ -330,31 +381,29 @@ export async function saveWeeklyReportToCloud(
   const path = `users/${userId}/weeklyReports/${report.id}`;
   try {
     const reportRef = doc(db, 'users', userId, 'weeklyReports', report.id);
-    await setDoc(reportRef, {
+    const reportData = cleanForFirestore({
       ...report,
       savedAt: new Date().toISOString(),
     });
+    await setDoc(reportRef, reportData);
 
     // Also update current active user doc with latest weekly report reference
     const userRef = doc(db, 'users', userId);
-    await setDoc(
-      userRef,
-      {
-        latestWeeklyReport: {
-          id: report.id,
-          weekNumber: report.weekNumber,
-          year: report.year,
-          weeklyGrade: report.weeklyGrade,
-          weeklyEvaluationTitle: report.weeklyEvaluationTitle,
-          totalPrayerMinutes: report.totalPrayerMinutes,
-          totalQuestsCompleted: report.totalQuestsCompleted,
-          totalXpGained: report.totalXpGained,
-          generatedAt: report.generatedAt,
-        },
-        updatedAt: new Date().toISOString(),
+    const userUpdate = cleanForFirestore({
+      latestWeeklyReport: {
+        id: report.id,
+        weekNumber: report.weekNumber,
+        year: report.year,
+        weeklyGrade: report.weeklyGrade,
+        weeklyEvaluationTitle: report.weeklyEvaluationTitle,
+        totalPrayerMinutes: report.totalPrayerMinutes,
+        totalQuestsCompleted: report.totalQuestsCompleted,
+        totalXpGained: report.totalXpGained,
+        generatedAt: report.generatedAt,
       },
-      { merge: true }
-    );
+      updatedAt: new Date().toISOString(),
+    });
+    await setDoc(userRef, userUpdate, { merge: true });
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
   }

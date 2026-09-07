@@ -1,6 +1,17 @@
 import React from 'react';
 import { ActiveTab } from '../types';
-import { LayoutDashboard, CheckSquare, Skull, Network, Compass, ShieldCheck, User, Palette } from 'lucide-react';
+import {
+  LayoutDashboard,
+  BookOpen,
+  Music,
+  CheckSquare,
+  Skull,
+  Network,
+  Compass,
+  ShieldCheck,
+  User,
+  Palette,
+} from 'lucide-react';
 import { playSystemSound } from '../utils/audio';
 
 interface NavigationProps {
@@ -18,7 +29,15 @@ export const Navigation: React.FC<NavigationProps> = ({
 }) => {
   const tabs = [
     { id: 'dashboard' as ActiveTab, label: 'Statut', shortLabel: 'Statut', icon: LayoutDashboard },
-    { id: 'quests' as ActiveTab, label: 'Quêtes', shortLabel: 'Quêtes', icon: CheckSquare, badge: uncompletedQuestsCount > 0 ? uncompletedQuestsCount : undefined },
+    { id: 'bible' as ActiveTab, label: 'La Bible', shortLabel: 'Bible', icon: BookOpen },
+    { id: 'worship' as ActiveTab, label: 'Adoration', shortLabel: 'Adoration', icon: Music },
+    {
+      id: 'quests' as ActiveTab,
+      label: 'Quêtes',
+      shortLabel: 'Quêtes',
+      icon: CheckSquare,
+      badge: uncompletedQuestsCount > 0 ? uncompletedQuestsCount : undefined,
+    },
     { id: 'shadows' as ActiveTab, label: 'Ombres', shortLabel: 'Ombres', icon: Skull },
     { id: 'skills' as ActiveTab, label: 'Dons & Skills', shortLabel: 'Dons', icon: Network },
     { id: 'dungeons' as ActiveTab, label: 'Portails', shortLabel: 'Portails', icon: Compass },

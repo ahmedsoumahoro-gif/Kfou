@@ -3,6 +3,7 @@ import { User as FirebaseUser } from 'firebase/auth';
 import { HunterUser, Badge, AppearanceSettings, ReminderSettings } from '../types';
 import { Shield, Award, Calendar, Sparkles, Flame, BookOpen, RotateCcw, Sliders, Camera, Edit3, Cloud, CloudUpload, UserCheck, LogIn, LogOut, CheckCircle2, Bell, BellRing, Clock, Crown, ChevronRight } from 'lucide-react';
 import { playSystemSound } from '../utils/audio';
+import { logoutHunter } from '../services/firebase';
 import { AppearanceSettingsSection } from './AppearanceSettingsSection';
 import { HunterAvatar } from './HunterAvatar';
 import { getRankBadgeColor, getRankTextColor } from '../data/initialData';
@@ -518,32 +519,49 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-          <button
-            type="button"
-            id="profile-manage-auth-btn"
-            onClick={() => {
-              playSystemSound('click');
-              onOpenAuthModal();
-            }}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-hud font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(56,189,248,0.3)] transition-all cursor-pointer active:scale-98"
-          >
-            {firebaseUser ? (
-              <>
-                <Cloud className="w-4 h-4" />
-                <span>Gérer Mon Profil & Synchroniser</span>
-              </>
-            ) : (
-              <>
-                <LogIn className="w-4 h-4" />
-                <span>Ouvrir l'Espace de Connexion</span>
-              </>
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <button
+              type="button"
+              id="profile-manage-auth-btn"
+              onClick={() => {
+                playSystemSound('click');
+                onOpenAuthModal();
+              }}
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-hud font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(56,189,248,0.3)] transition-all cursor-pointer active:scale-98"
+            >
+              {firebaseUser ? (
+                <>
+                  <Cloud className="w-4 h-4" />
+                  <span>Gérer Mon Profil & Synchroniser</span>
+                </>
+              ) : (
+                <>
+                  <LogIn className="w-4 h-4" />
+                  <span>Ouvrir l'Espace de Connexion</span>
+                </>
+              )}
+            </button>
+
+            {firebaseUser && (
+              <button
+                type="button"
+                id="profile-logout-btn"
+                onClick={async () => {
+                  playSystemSound('click');
+                  await logoutHunter();
+                }}
+                className="px-4 py-2.5 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-300 font-hud font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Déconnexion</span>
+              </button>
             )}
-          </button>
+          </div>
 
           <button
             type="button"
             onClick={() => {
-              if (confirm('Voulez-vous réinitialiser les données locales au compte par défaut ?')) {
+              if (confirm('Voulez-vous réinitialiser les données au rang de départ (Rang E, Niveau 1) ?')) {
                 playSystemSound('click');
                 onResetData();
               }
@@ -551,7 +569,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             className="w-full sm:w-auto px-4 py-2 rounded-xl bg-slate-900 hover:bg-red-950/40 border border-slate-800 hover:border-red-500/40 text-slate-400 hover:text-red-300 font-hud text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span>Réinitialiser les Données</span>
+            <span>Réinitialiser à Zéro</span>
           </button>
         </div>
       </div>

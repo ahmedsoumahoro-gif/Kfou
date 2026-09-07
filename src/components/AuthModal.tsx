@@ -4,10 +4,7 @@ import {
   loginWithGoogle,
   logoutHunter,
   saveHunterToCloud,
-  signUpWithEmail,
-  signInWithEmail,
   updateHunterDisplayName,
-  resetHunterPassword,
 } from '../services/firebase';
 import { HunterUser, Quest, Vice, Skill, DungeonBreak, Badge, InventoryItem, AppearanceSettings } from '../types';
 import {
@@ -20,14 +17,11 @@ import {
   AlertCircle,
   X,
   UserCheck,
-  UserPlus,
-  Key,
-  Mail,
   User,
   Edit2,
   Check,
-  KeyRound,
   ShieldCheck,
+  Database,
 } from 'lucide-react';
 import { playSystemSound } from '../utils/audio';
 import { HunterAvatar } from './HunterAvatar';
@@ -49,8 +43,6 @@ interface AuthModalProps {
   onUpdatePseudo?: (newPseudo: string) => void;
 }
 
-type AuthTab = 'login' | 'register' | 'quick-pseudo';
-
 export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onClose,
@@ -67,14 +59,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onSyncSuccess,
   onUpdatePseudo,
 }) => {
-  const [activeTab, setActiveTab] = useState<AuthTab>('login');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // Form states
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // Form state
   const [pseudo, setPseudo] = useState(hunterUser.name || '');
 
   // Logged-in editable pseudo state
@@ -90,108 +79,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setSuccessMsg(null);
   };
 
-  // 1. Email + Password Sign In
-  const handleEmailSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim() || !password) {
-      setErrorMsg('Veuillez renseigner votre email et mot de passe.');
-      return;
-    }
-    try {
-      setLoading(true);
-      clearMessages();
-      playSystemSound('click');
-      const user = await signInWithEmail(email.trim(), password);
-      playSystemSound('quest_complete');
-      setSuccessMsg(`Ravi de vous revoir, Chasseur ${user.displayName || hunterUser.name} !`);
-      if (user.displayName && onUpdatePseudo) {
-        onUpdatePseudo(user.displayName);
-      }
-    } catch (err: unknown) {
-      console.error('Email sign in error:', err);
-      const errString = err instanceof Error ? err.message : String(err);
-      if (errString.includes('user-not-found') || errString.includes('wrong-password') || errString.includes('invalid-credential')) {
-        setErrorMsg('Email ou mot de passe incorrect.');
-      } else if (errString.includes('invalid-email')) {
-        setErrorMsg('Adresse email invalide.');
-      } else {
-        setErrorMsg('Erreur lors de la connexion. Veuillez vérifier vos identifiants.');
-      }
-      playSystemSound('click');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 2. Register New Hunter Account with Pseudo, Email, Password
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!pseudo.trim()) {
-      setErrorMsg('Veuillez choisir un pseudo de chasseur.');
-      return;
-    }
-    if (!email.trim() || !password) {
-      setErrorMsg('Veuillez renseigner un email et un mot de passe.');
-      return;
-    }
-    if (password.length < 6) {
-      setErrorMsg('Le mot de passe doit comporter au moins 6 caractères.');
-      return;
-    }
-    try {
-      setLoading(true);
-      clearMessages();
-      playSystemSound('click');
-      const user = await signUpWithEmail(email.trim(), password, pseudo.trim());
-      if (onUpdatePseudo) {
-        onUpdatePseudo(pseudo.trim());
-      }
-      // Save initial progression to cloud immediately
-      await saveHunterToCloud(user.uid, {
-        user: { ...hunterUser, name: pseudo.trim(), email: email.trim() },
-        quests,
-        vices,
-        skills,
-        dungeons,
-        badges,
-        inventory,
-        appearance: settings,
-      });
-      playSystemSound('level_up');
-      setSuccessMsg(`Bienvenue dans BloomVerse, ${pseudo.trim()} ! Votre compte a été créé avec succès.`);
-    } catch (err: unknown) {
-      console.error('Register error:', err);
-      const errString = err instanceof Error ? err.message : String(err);
-      if (errString.includes('email-already-in-use')) {
-        setErrorMsg('Cet email est déjà associé à un compte existant. Essayez de vous connecter.');
-      } else if (errString.includes('weak-password')) {
-        setErrorMsg('Le mot de passe est trop faible. Utilisez au moins 6 caractères.');
-      } else {
-        setErrorMsg("Erreur lors de la création du compte. Veuillez réessayer.");
-      }
-      playSystemSound('click');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 3. Quick Pseudo Change (Local / Instant)
-  const handleSaveQuickPseudo = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!pseudo.trim()) {
-      setErrorMsg('Veuillez saisir un pseudo valide.');
-      return;
-    }
-    if (onUpdatePseudo) {
-      onUpdatePseudo(pseudo.trim());
-    }
-    playSystemSound('quest_complete');
-    setSuccessMsg(`Votre pseudo a été défini sur « ${pseudo.trim()} » !`);
-  };
-
-  // 4. Update Hunter Pseudo when logged in
+  // Save Pseudo when logged in
   const handleSaveLoggedInPseudo = async () => {
-    if (!editablePseudo.trim()) return;
+    if (!editablePseudo.trim()) {
+      setErrorMsg('Le pseudo ne peut pas être vide.');
+      return;
+    }
     try {
       setLoading(true);
       clearMessages();
@@ -200,6 +93,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       if (onUpdatePseudo) {
         onUpdatePseudo(editablePseudo.trim());
       }
+      setIsEditingPseudo(false);
+      playSystemSound('level_up');
+      setSuccessMsg(`Votre pseudo a été mis à jour : "${editablePseudo.trim()}".`);
+
+      // Persist to cloud
       if (currentUser) {
         await saveHunterToCloud(currentUser.uid, {
           user: { ...hunterUser, name: editablePseudo.trim() },
@@ -212,50 +110,42 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           appearance: settings,
         });
       }
-      setIsEditingPseudo(false);
-      playSystemSound('quest_complete');
-      setSuccessMsg(`Pseudo mis à jour : « ${editablePseudo.trim()} »`);
-      if (onSyncSuccess) onSyncSuccess();
     } catch (err) {
       console.error('Update pseudo error:', err);
-      setErrorMsg('Impossible de mettre à jour le pseudo.');
+      setErrorMsg('Erreur lors de la mise à jour du pseudo.');
     } finally {
       setLoading(false);
     }
   };
 
-  // 5. Password Reset
-  const handleResetPassword = async () => {
-    if (!email.trim()) {
-      setErrorMsg('Entrez votre email ci-dessus pour recevoir un lien de réinitialisation.');
+  // Quick Pseudo Change
+  const handleSaveQuickPseudo = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pseudo.trim()) {
+      setErrorMsg('Le pseudo ne peut pas être vide.');
       return;
     }
-    try {
-      setLoading(true);
-      clearMessages();
-      playSystemSound('click');
-      await resetHunterPassword(email.trim());
-      setSuccessMsg(`Un lien de réinitialisation a été envoyé à ${email.trim()}.`);
-    } catch (err) {
-      console.error('Reset password error:', err);
-      setErrorMsg("Impossible d'envoyer l'email de réinitialisation. Vérifiez l'adresse saisie.");
-    } finally {
-      setLoading(false);
+    clearMessages();
+    playSystemSound('click');
+    if (onUpdatePseudo) {
+      onUpdatePseudo(pseudo.trim());
     }
+    setSuccessMsg(`Pseudo défini sur "${pseudo.trim()}".`);
   };
 
-  // 6. Google Sign In
+  // Google Sign In
   const handleGoogleLogin = async () => {
     try {
       setLoading(true);
       clearMessages();
       playSystemSound('click');
-      const user = await loginWithGoogle();
-      if (user.displayName && onUpdatePseudo) {
-        onUpdatePseudo(user.displayName);
+      const cleanPseudo = pseudo.trim() || hunterUser.name;
+      const user = await loginWithGoogle(cleanPseudo);
+      if (cleanPseudo && onUpdatePseudo) {
+        onUpdatePseudo(cleanPseudo);
       }
       playSystemSound('level_up');
-      setSuccessMsg(`Connexion Google réussie ! Bienvenue, ${user.displayName || hunterUser.name}.`);
+      setSuccessMsg(`Connexion Google réussie ! Bienvenue, ${user.displayName || cleanPseudo}.`);
     } catch (err: unknown) {
       console.error('Google login error:', err);
       const errString = err instanceof Error ? err.message : String(err);
@@ -270,7 +160,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  // 7. Sign Out
+  // Sign Out
   const handleLogout = async () => {
     try {
       setLoading(true);
@@ -278,6 +168,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       playSystemSound('click');
       await logoutHunter();
       setSuccessMsg('Session déconnectée avec succès.');
+      onClose();
     } catch (err) {
       console.error('Logout error:', err);
       setErrorMsg('Erreur lors de la déconnexion.');
@@ -286,7 +177,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  // 8. Manual Sync
+  // Manual Cloud Sync
   const handleManualSync = async () => {
     if (!currentUser) return;
     try {
@@ -304,7 +195,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         appearance: settings,
       });
       playSystemSound('quest_complete');
-      setSuccessMsg('Toutes vos données de chasseur ont été synchronisées avec succès !');
+      setSuccessMsg('Toutes vos données de chasseur ont été synchronisées avec succès sur Firestore !');
       if (onSyncSuccess) onSyncSuccess();
     } catch (err) {
       console.error('Sync error:', err);
@@ -328,18 +219,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             playSystemSound('click');
             onClose();
           }}
-          className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition-colors"
+          className="absolute top-5 right-5 p-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-700/50 transition-colors cursor-pointer"
           title="Fermer"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Modal Header */}
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 pr-8">
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-hud font-bold tracking-wider uppercase bg-sky-950/80 border border-sky-500/40 text-sky-300">
               <Sparkles className="w-3 h-3 text-sky-400" />
-              SYSTÈME DE CONNEXION HUNTER
+              GESTION DU COMPTE CHASSEUR
             </span>
             {currentUser && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-hud font-bold bg-emerald-950/80 border border-emerald-500/40 text-emerald-300">
@@ -349,10 +240,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             )}
           </div>
           <h2 className="font-hud text-2xl font-black text-white tracking-wide">
-            Espace de Connexion
+            {currentUser ? 'Mon Profil & Synchronisation' : 'Identification du Chasseur'}
           </h2>
           <p className="text-xs text-slate-400 font-sans">
-            Connectez-vous avec votre pseudo et mot de passe, ou liez votre compte pour synchroniser votre progression spirituelle.
+            {currentUser
+              ? 'Votre progression est sauvegardée dans votre base de données Cloud Firestore.'
+              : 'Définissez votre pseudo ou connectez-vous avec Google pour sécuriser vos données.'}
           </p>
         </div>
 
@@ -444,59 +337,55 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </div>
                   )}
 
-                  <p className="text-xs text-slate-300 font-mono truncate">{currentUser.email}</p>
+                  {currentUser.email && (
+                    <p className="text-xs text-slate-300 font-mono truncate">{currentUser.email}</p>
+                  )}
                   <div className="flex items-center gap-2 text-[11px] font-hud text-amber-300">
                     <span>{hunterUser.hunterRank}</span>
                     <span>•</span>
                     <span>Niveau {hunterUser.level}</span>
                     <span>•</span>
-                    <span className="text-sky-300">{hunterUser.totalXp} XP</span>
+                    <span>{hunterUser.currentXp} XP</span>
                   </div>
                 </div>
               </div>
 
-              {/* Status */}
-              <div className="pt-3 border-t border-sky-900/30 flex items-center justify-between text-xs font-sans">
-                <div className="flex items-center gap-2 text-emerald-400">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              {/* Cloud Sync Status */}
+              <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400 flex items-center gap-1.5">
+                    <Cloud className="w-3.5 h-3.5 text-sky-400" />
+                    Statut Cloud Firestore
                   </span>
-                  <span className="font-hud text-[11px] font-bold tracking-wider">
-                    CLOUD FIRESTORE ACTIF
+                  <span className="text-emerald-400 font-mono text-[11px] font-bold">
+                    Opérationnel & Actif
                   </span>
                 </div>
-
-                <span className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-slate-500 font-mono">
                   {lastSyncedAt
-                    ? `Synchro: ${new Date(lastSyncedAt).toLocaleTimeString('fr-FR', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}`
-                    : 'Prêt à sauvegarder'}
-                </span>
+                    ? `Dernière synchro : ${new Date(lastSyncedAt).toLocaleTimeString('fr-FR')} (${new Date(lastSyncedAt).toLocaleDateString('fr-FR')})`
+                    : 'Prêt pour la synchronisation'}
+                </p>
               </div>
             </div>
 
-            {/* Actions for Authenticated Hunter */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Actions for Logged-In User */}
+            <div className="flex flex-col sm:flex-row items-center gap-2.5">
               <button
                 type="button"
-                id="hunter-manual-sync-btn"
                 onClick={handleManualSync}
                 disabled={loading}
-                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-hud font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(56,189,248,0.3)] transition-all cursor-pointer disabled:opacity-50"
+                className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-hud font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(56,189,248,0.3)] transition-all cursor-pointer disabled:opacity-50"
               >
-                <CloudUpload className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                <span>{loading ? 'Sauvegarde...' : 'Sauvegarder mon Profil'}</span>
+                <CloudUpload className="w-4 h-4" />
+                <span>{loading ? 'Synchronisation...' : 'Synchroniser Maintenant'}</span>
               </button>
 
               <button
                 type="button"
-                id="hunter-logout-btn"
                 onClick={handleLogout}
                 disabled={loading}
-                className="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-red-950/40 border border-slate-800 hover:border-red-500/50 text-slate-300 hover:text-red-300 font-hud font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                className="w-full sm:w-auto py-3 px-4 rounded-xl bg-red-950/50 hover:bg-red-900/60 border border-red-500/40 text-red-200 font-hud font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Se déconnecter</span>
@@ -504,221 +393,49 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           </div>
         ) : (
-          /* CASE 2: HUNTER IS NOT CONNECTED - TABS FOR LOGIN, REGISTER, OR QUICK PSEUDO */
+          /* CASE 2: NOT CONNECTED */
           <div className="space-y-4">
-            {/* Tab Selector */}
-            <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800 text-xs font-hud font-bold">
-              <button
-                type="button"
-                onClick={() => {
-                  playSystemSound('click');
-                  setActiveTab('login');
-                  clearMessages();
-                }}
-                className={`py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                  activeTab === 'login'
-                    ? 'bg-sky-600 text-white shadow-md'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>Connexion</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  playSystemSound('click');
-                  setActiveTab('register');
-                  clearMessages();
-                }}
-                className={`py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                  activeTab === 'register'
-                    ? 'bg-sky-600 text-white shadow-md'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <UserPlus className="w-3.5 h-3.5" />
-                <span>Créer Compte</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  playSystemSound('click');
-                  setActiveTab('quick-pseudo');
-                  clearMessages();
-                }}
-                className={`py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                  activeTab === 'quick-pseudo'
-                    ? 'bg-sky-600 text-white shadow-md'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <User className="w-3.5 h-3.5" />
-                <span>Pseudo Rapide</span>
-              </button>
+            <div className="p-3.5 rounded-xl bg-sky-950/40 border border-sky-800/40 flex items-start gap-3">
+              <Database className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
+              <div className="text-xs leading-relaxed text-slate-300">
+                <span className="font-bold text-sky-300">Zéro Inscription Email :</span>{' '}
+                Définissez votre pseudo ou connectez-vous avec Google en 1 clic pour enregistrer votre progression.
+              </div>
             </div>
 
-            {/* TAB 1: CONNEXION (EMAIL + PASSWORD) */}
-            {activeTab === 'login' && (
-              <form onSubmit={handleEmailSignIn} className="space-y-3.5 pt-1">
-                <div className="space-y-1">
-                  <label className="text-[11px] font-hud uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5 text-sky-400" />
-                    Adresse Email
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="exemple@domaine.com"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm font-sans focus:outline-none focus:border-sky-400"
-                  />
-                </div>
+            {/* Pseudo Form */}
+            <form onSubmit={handleSaveQuickPseudo} className="space-y-3.5">
+              <div className="space-y-1">
+                <label className="text-[11px] font-hud uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-sky-400" />
+                  Votre Pseudo de Chasseur
+                </label>
+                <input
+                  type="text"
+                  required
+                  maxLength={35}
+                  value={pseudo}
+                  onChange={(e) => setPseudo(e.target.value)}
+                  placeholder="Ex: David, Esther, Ahmed..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-sky-500/40 text-white text-sm font-hud tracking-wide focus:outline-none focus:border-sky-400"
+                />
+              </div>
 
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-hud uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                      <Key className="w-3.5 h-3.5 text-sky-400" />
-                      Mot de passe
-                    </label>
-                    <button
-                      type="button"
-                      onClick={handleResetPassword}
-                      className="text-[10px] text-sky-400 hover:text-sky-300 font-hud cursor-pointer"
-                    >
-                      Mot de passe oublié ?
-                    </button>
-                  </div>
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm font-sans focus:outline-none focus:border-sky-400"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-hud font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(56,189,248,0.3)] transition-all cursor-pointer disabled:opacity-50"
-                >
-                  <LogIn className="w-4 h-4" />
-                  <span>{loading ? 'Connexion en cours...' : 'Se Connecter'}</span>
-                </button>
-              </form>
-            )}
-
-            {/* TAB 2: CRÉER UN COMPTE (PSEUDO + EMAIL + PASSWORD) */}
-            {activeTab === 'register' && (
-              <form onSubmit={handleRegister} className="space-y-3.5 pt-1">
-                <div className="space-y-1">
-                  <label className="text-[11px] font-hud uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 text-amber-400" />
-                    Pseudo du Chasseur (Obligatoire)
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={30}
-                    value={pseudo}
-                    onChange={(e) => setPseudo(e.target.value)}
-                    placeholder="Ex: David_Vaillant, ChasseurDeLumiere..."
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-amber-500/40 text-white text-sm font-hud tracking-wide focus:outline-none focus:border-amber-400"
-                  />
-                  <span className="text-[10px] text-slate-500 font-sans block">
-                    Ce pseudo apparaîtra sur votre carte de chasseur et vos exploits.
-                  </span>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[11px] font-hud uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5 text-sky-400" />
-                    Adresse Email
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="exemple@domaine.com"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm font-sans focus:outline-none focus:border-sky-400"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[11px] font-hud uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                    <Key className="w-3.5 h-3.5 text-sky-400" />
-                    Mot de passe (Min. 6 caractères)
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    minLength={6}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm font-sans focus:outline-none focus:border-sky-400"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-hud font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(245,158,11,0.3)] transition-all cursor-pointer disabled:opacity-50"
-                >
-                  <UserPlus className="w-4 h-4" />
-                  <span>{loading ? 'Création en cours...' : 'Créer mon Compte Hunter'}</span>
-                </button>
-              </form>
-            )}
-
-            {/* TAB 3: PSEUDO RAPIDE (SANS CRÉATION DE COMPTE EMAIL) */}
-            {activeTab === 'quick-pseudo' && (
-              <form onSubmit={handleSaveQuickPseudo} className="space-y-3.5 pt-1">
-                <div className="p-3 rounded-xl bg-slate-900/70 border border-slate-800 text-xs text-slate-400 space-y-1">
-                  <span className="font-hud font-bold text-white block">Mode Immédiat / Sans Inscription</span>
-                  <p>
-                    Vous pouvez simplement définir votre Pseudo de Chasseur sans mot de passe pour commencer à jouer immédiatement sur cet appareil.
-                  </p>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[11px] font-hud uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 text-sky-400" />
-                    Votre Pseudo Actuel
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={30}
-                    value={pseudo}
-                    onChange={(e) => setPseudo(e.target.value)}
-                    placeholder="Votre Pseudo..."
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-sky-500/50 text-white text-sm font-hud tracking-wide focus:outline-none focus:border-sky-400"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full py-3 px-4 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-hud font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
-                >
-                  <Check className="w-4 h-4" />
-                  <span>Enregistrer mon Pseudo</span>
-                </button>
-              </form>
-            )}
+              <button
+                type="submit"
+                className="w-full py-3 px-4 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-hud font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+              >
+                <Check className="w-4 h-4" />
+                <span>Enregistrer ce Pseudo</span>
+              </button>
+            </form>
 
             {/* Google alternative */}
             <div className="pt-2">
               <div className="relative flex py-2 items-center">
                 <div className="flex-grow border-t border-slate-800"></div>
                 <span className="flex-shrink mx-3 text-[10px] font-hud uppercase text-slate-500 tracking-wider">
-                  OU CONTINUER AVEC
+                  OU CONNEXION DIRECTE GOOGLE
                 </span>
                 <div className="flex-grow border-t border-slate-800"></div>
               </div>
@@ -728,7 +445,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 id="google-signin-btn"
                 onClick={handleGoogleLogin}
                 disabled={loading}
-                className="w-full py-3 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-hud font-bold text-xs tracking-wide flex items-center justify-center gap-2.5 shadow-[0_0_20px_rgba(255,255,255,0.15)] transition-all cursor-pointer active:scale-98 disabled:opacity-50 mt-1"
+                className="w-full py-3.5 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-hud font-bold text-xs tracking-wide flex items-center justify-center gap-2.5 shadow-[0_0_20px_rgba(255,255,255,0.15)] transition-all cursor-pointer active:scale-98 disabled:opacity-50 mt-1"
               >
                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                   <path
@@ -748,7 +465,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                   />
                 </svg>
-                <span>Se connecter avec Google</span>
+                <span>
+                  {pseudo.trim()
+                    ? `Lier à Google sous le pseudo "${pseudo.trim()}"`
+                    : 'Continuer avec Google'}
+                </span>
               </button>
             </div>
           </div>
@@ -756,7 +477,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         {/* Footer */}
         <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-500">
-          <span>BloomVerse • Système d'Éveil Spirituel</span>
+          <span>BloomVerse • Solo Leveling Céleste</span>
           <button
             type="button"
             onClick={() => {

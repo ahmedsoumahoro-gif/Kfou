@@ -1,11 +1,15 @@
-// Web Audio API Synthesizer for Solo Leveling Sound Effects
+// Moteur d'effets sonores sacrés et apaisants (Web Audio API)
+// Sons doux et respectueux : bols tibétains / cloches de monastère, harpe délicate et accords de grâce.
+// Aucune sonorité criarde de jeu vidéo d'arcade.
 let audioCtx: AudioContext | null = null;
 let soundEnabled = true;
 
 function getAudioContext(): AudioContext | null {
   if (typeof window === 'undefined') return null;
   if (!audioCtx) {
-    const AudioCtxClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const AudioCtxClass =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (AudioCtxClass) {
       audioCtx = new AudioCtxClass();
     }
@@ -39,123 +43,133 @@ export function playSystemSound(
 
     const now = ctx.currentTime;
 
-    if (type === 'chime') {
-      // Duolingo-style sparkling reminder chime: C6 -> G6 -> C7
-      const reminderNotes = [1046.5, 1567.98, 2093.0];
-      reminderNotes.forEach((freq, idx) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, now + idx * 0.12);
-        gain.gain.setValueAtTime(0.18, now + idx * 0.12);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.3);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now + idx * 0.12);
-        osc.stop(now + idx * 0.12 + 0.35);
-      });
-    } else if (type === 'click') {
+    if (type === 'click') {
+      // Clic doux feutré de bois noble / goutte d'eau pure (ultra discret)
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(800, now);
-      osc.frequency.exponentialRampToValueAtTime(400, now + 0.05);
-      gain.gain.setValueAtTime(0.1, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      osc.frequency.setValueAtTime(520, now);
+      osc.frequency.exponentialRampToValueAtTime(320, now + 0.04);
+      gain.gain.setValueAtTime(0.06, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start(now);
-      osc.stop(now + 0.05);
+      osc.stop(now + 0.045);
     } else if (type === 'bell') {
-      // Sacred sanctuary bell / chime with subtle harmonics
-      [523.25, 1046.5, 1567.98].forEach((freq, idx) => {
+      // Cloche sacrée / bol de sanctuaire riche en harmoniques pures (résonance longue et apaisante)
+      const harmonics = [
+        { freq: 432.0, amp: 0.12, decay: 2.8 }, // Fondamentale 432 Hz
+        { freq: 864.0, amp: 0.06, decay: 2.2 },
+        { freq: 1296.0, amp: 0.03, decay: 1.8 },
+        { freq: 1728.0, amp: 0.015, decay: 1.4 },
+      ];
+      harmonics.forEach(({ freq, amp, decay }) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
         osc.frequency.setValueAtTime(freq, now);
-        gain.gain.setValueAtTime(0.15 / (idx + 1), now);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(amp, now + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + decay);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now);
-        osc.stop(now + 1.8);
+        osc.stop(now + decay + 0.1);
       });
-    } else if (type === 'quest_complete') {
-      // Ascending chime: E5, G#5, B5, E6
-      const notes = [659.25, 830.61, 987.77, 1318.51];
+    } else if (type === 'chime') {
+      // Carillon céleste doux pour rappel spirituel (C5 -> E5 -> G5)
+      const notes = [523.25, 659.25, 783.99];
       notes.forEach((freq, idx) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        osc.type = 'triangle';
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+        gain.gain.setValueAtTime(0.0001, now + idx * 0.12);
+        gain.gain.linearRampToValueAtTime(0.08, now + idx * 0.12 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.6);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + idx * 0.12);
+        osc.stop(now + idx * 0.12 + 0.65);
+      });
+    } else if (type === 'quest_complete') {
+      // Arpège de harpe d'adoration délicat : Do4, Mi4, Sol4, Si4, Do5 (pureté et grâce)
+      const notes = [261.63, 329.63, 392.0, 493.88, 523.25];
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+        gain.gain.setValueAtTime(0.0001, now + idx * 0.09);
+        gain.gain.linearRampToValueAtTime(0.08, now + idx * 0.09 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.09 + 0.9);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + idx * 0.09);
+        osc.stop(now + idx * 0.09 + 0.95);
+      });
+    } else if (type === 'level_up') {
+      // Chœur céleste d'élévation spirituelle : accord de Do Majeur 9ème solennel et réverbéré
+      const chordNotes = [261.63, 329.63, 392.0, 493.88, 587.33, 1046.5];
+      chordNotes.forEach((freq) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(0.04, now + 0.4);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.8);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 2.9);
+      });
+    } else if (type === 'slash') {
+      // Souffle apaisant de l'Esprit / brise de prière (pas de bruit de tranchant de jeu vidéo)
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(240, now);
+      osc.frequency.linearRampToValueAtTime(360, now + 0.15);
+      osc.frequency.linearRampToValueAtTime(180, now + 0.35);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(0.06, now + 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.45);
+    } else if (type === 'extract') {
+      // Résonance de sanctification et de libération intérieure (onde pure ascendante)
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.exponentialRampToValueAtTime(540, now + 0.9);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(0.08, now + 0.3);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.4);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 1.5);
+    } else if (type === 'portal') {
+      // Transition solennelle de sanctuaire
+      const notes = [196.0, 246.94, 293.66, 392.0];
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
         osc.frequency.setValueAtTime(freq, now + idx * 0.08);
-        gain.gain.setValueAtTime(0.15, now + idx * 0.08);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.35);
+        gain.gain.setValueAtTime(0.0001, now + idx * 0.08);
+        gain.gain.linearRampToValueAtTime(0.05, now + idx * 0.08 + 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.08 + 1.1);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now + idx * 0.08);
-        osc.stop(now + idx * 0.08 + 0.4);
+        osc.stop(now + idx * 0.08 + 1.2);
       });
-    } else if (type === 'level_up') {
-      // Epic triumphant chords
-      const chords = [
-        [523.25, 659.25, 783.99], // C Major
-        [587.33, 739.99, 880.00], // D Major
-        [659.25, 830.61, 987.77], // E Major
-        [1046.5, 1318.5, 1567.98], // High C Octave
-      ];
-      chords.forEach((chord, chordIdx) => {
-        chord.forEach((freq) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(freq, now + chordIdx * 0.15);
-          gain.gain.setValueAtTime(0.08, now + chordIdx * 0.15);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + chordIdx * 0.15 + 0.45);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now + chordIdx * 0.15);
-          osc.stop(now + chordIdx * 0.15 + 0.5);
-        });
-      });
-    } else if (type === 'slash') {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(600, now);
-      osc.frequency.exponentialRampToValueAtTime(80, now + 0.12);
-      gain.gain.setValueAtTime(0.2, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.13);
-    } else if (type === 'extract') {
-      // Deep resonant pulse rising with eerie shimmer
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(110, now);
-      osc.frequency.exponentialRampToValueAtTime(440, now + 0.8);
-      gain.gain.setValueAtTime(0.25, now);
-      gain.gain.linearRampToValueAtTime(0.3, now + 0.5);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 1.2);
-    } else if (type === 'portal') {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(120, now);
-      osc.frequency.linearRampToValueAtTime(280, now + 0.3);
-      osc.frequency.linearRampToValueAtTime(150, now + 0.6);
-      gain.gain.setValueAtTime(0.15, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.7);
     }
   } catch {
     // Audio contexts might be blocked until first user interaction

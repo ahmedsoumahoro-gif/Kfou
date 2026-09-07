@@ -1,21 +1,86 @@
 import { HunterUser, Quest, Vice, Skill, DungeonBreak, Badge, InventoryItem, DailyVerse } from '../types';
 
-export const INITIAL_USER: HunterUser = {
-  id: 'usr_sung_jin_christ',
-  name: 'Sung Jin-Christ',
-  email: 'demo@bloomverse.app',
-  spiritualTitle: 'Disciple Éveillé de la Grâce',
-  hunterRank: 'Rang C',
+export const INITIAL_ZERO_USER: HunterUser = {
+  id: '',
+  name: 'Chasseur Novice',
+  email: '',
+  spiritualTitle: 'Novice de la Grâce',
+  hunterRank: 'Rang E',
   avatar: 'shadow_monarch_cross',
-  conversionDate: '2024-01-01',
-  level: 5,
-  currentXp: 450,
-  totalXp: 1650,
-  prayerMinutesToday: 25,
-  bibleChaptersToday: 3,
-  fastingDaysStreak: 1,
-  generalViceStreak: 14,
+  conversionDate: new Date().toISOString().split('T')[0],
+  level: 1,
+  currentXp: 0,
+  totalXp: 0,
+  prayerMinutesToday: 0,
+  bibleChaptersToday: 0,
+  fastingDaysStreak: 0,
+  generalViceStreak: 0,
 };
+
+export function createZeroHunterState(
+  userId: string,
+  name?: string,
+  email?: string,
+  avatar?: string
+) {
+  const user: HunterUser = {
+    id: userId,
+    name: name?.trim() || 'Chasseur Novice',
+    email: email?.trim() || 'chasseur@bloomverse.app',
+    spiritualTitle: 'Novice de la Grâce',
+    hunterRank: 'Rang E',
+    avatar: avatar || 'shadow_monarch_cross',
+    conversionDate: new Date().toISOString().split('T')[0],
+    level: 1,
+    currentXp: 0,
+    totalXp: 0,
+    prayerMinutesToday: 0,
+    bibleChaptersToday: 0,
+    fastingDaysStreak: 0,
+    generalViceStreak: 0,
+  };
+
+  const quests: Quest[] = INITIAL_QUESTS.map((q) => ({
+    ...q,
+    completedToday: false,
+  }));
+
+  const vices: Vice[] = INITIAL_VICES.map((v) => ({
+    ...v,
+    currentHp: 100,
+    streak: 0,
+    extracted: false,
+  }));
+
+  const skills: Skill[] = INITIAL_SKILLS.map((s) => ({
+    ...s,
+    unlocked: false,
+  }));
+
+  const dungeons: DungeonBreak[] = INITIAL_DUNGEONS.map((d) => ({
+    ...d,
+    currentDay: 0,
+    active: false,
+    completed: false,
+  }));
+
+  const badges: Badge[] = INITIAL_BADGES.map((b) => {
+    const { unlockedAt: _, ...rest } = b;
+    return {
+      ...rest,
+      unlocked: false,
+    };
+  });
+
+  const inventory: InventoryItem[] = [
+    INITIAL_INVENTORY[0],
+    INITIAL_INVENTORY[3],
+  ];
+
+  return { user, quests, vices, skills, dungeons, badges, inventory };
+}
+
+export const INITIAL_USER: HunterUser = INITIAL_ZERO_USER;
 
 export const INITIAL_QUESTS: Quest[] = [
   {

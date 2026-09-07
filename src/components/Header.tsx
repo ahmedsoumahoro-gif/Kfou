@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
 import { HunterUser, AppearanceSettings, ReminderSettings } from '../types';
-import { Volume2, VolumeX, Sparkles, BookOpen, Flame, Sliders, Sun, Moon, Camera, Music, LogIn, Cloud, UserCheck, Bell, Palette, Crown } from 'lucide-react';
+import { Volume2, VolumeX, Sparkles, BookOpen, Flame, Sliders, Sun, Moon, Camera, Music, LogIn, LogOut, Cloud, UserCheck, Bell, Palette, Crown } from 'lucide-react';
 import { isAudioEnabled, toggleAudio, playSystemSound } from '../utils/audio';
 import { musicEngine } from '../utils/musicEngine';
+import { logoutHunter } from '../services/firebase';
 import { HunterAvatar } from './HunterAvatar';
 import { BloomVerseLogo } from './BloomVerseLogo';
 import { getRankBadgeColor, getXpRequiredForLevel } from '../data/initialData';
@@ -212,6 +213,22 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span className="whitespace-nowrap">Connexion</span>
+              </button>
+            )}
+
+            {/* Quick Logout Button when connected */}
+            {firebaseUser && (
+              <button
+                type="button"
+                id="header-auth-logout-btn"
+                onClick={async () => {
+                  playSystemSound('click');
+                  await logoutHunter();
+                }}
+                className="p-1.5 sm:p-2 rounded-lg bg-slate-900/80 border border-slate-800 hover:border-red-500/50 text-slate-400 hover:text-red-400 transition-colors"
+                title="Déconnexion (Quitter la session)"
+              >
+                <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
             )}
 

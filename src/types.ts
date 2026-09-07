@@ -107,7 +107,16 @@ export interface DailyVerse {
   theme: string;
 }
 
-export type ActiveTab = 'dashboard' | 'quests' | 'shadows' | 'skills' | 'dungeons' | 'inventory' | 'profile';
+export type ActiveTab =
+  | 'dashboard'
+  | 'bible'
+  | 'worship'
+  | 'quests'
+  | 'shadows'
+  | 'skills'
+  | 'dungeons'
+  | 'inventory'
+  | 'profile';
 
 export type AppTheme =
   | 'solo-dark'
