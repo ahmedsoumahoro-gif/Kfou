@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
 import { HunterUser, AppearanceSettings, ReminderSettings } from '../types';
-import { Volume2, VolumeX, Sparkles, BookOpen, Flame, Sliders, Sun, Moon, Camera, Music, LogIn, LogOut, Cloud, UserCheck, Bell, Palette, Crown } from 'lucide-react';
+import { Volume2, VolumeX, Sparkles, BookOpen, Flame, Sliders, Sun, Moon, Camera, Music, LogIn, LogOut, Cloud, UserCheck, Bell, Palette, Crown, Database } from 'lucide-react';
 import { isAudioEnabled, toggleAudio, playSystemSound } from '../utils/audio';
 import { musicEngine } from '../utils/musicEngine';
 import { logoutHunter } from '../services/firebase';
@@ -20,6 +20,7 @@ interface HeaderProps {
   onQuickToggleTheme: () => void;
   onOpenPhotoModal: () => void;
   onOpenAuthModal?: () => void;
+  onOpenDatabaseModal?: () => void;
   reminderSettings?: ReminderSettings;
   onOpenReminderModal?: () => void;
   onOpenWeeklyReport?: () => void;
@@ -41,6 +42,7 @@ export const Header: React.FC<HeaderProps> = ({
   onQuickToggleTheme,
   onOpenPhotoModal,
   onOpenAuthModal,
+  onOpenDatabaseModal,
   activeTab = 'dashboard',
 }) => {
   const [soundOn, setSoundOn] = useState(isAudioEnabled());
@@ -266,6 +268,23 @@ export const Header: React.FC<HeaderProps> = ({
               <Palette className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-sky-400" />
               <span className="hidden xl:inline text-xs font-hud font-bold tracking-wide">Thèmes</span>
             </button>
+
+            {/* Database & Backend Access Modal Button */}
+            {onOpenDatabaseModal && (
+              <button
+                type="button"
+                id="header-database-btn"
+                onClick={() => {
+                  playSystemSound('click');
+                  onOpenDatabaseModal();
+                }}
+                className="px-2 sm:px-2.5 py-1.5 sm:py-2 rounded-lg bg-amber-950/40 border border-amber-500/40 text-amber-400 hover:text-white hover:bg-amber-500/20 hover:border-amber-400 transition-all flex items-center gap-1.5 shadow-[0_0_10px_rgba(245,158,11,0.2)] cursor-pointer"
+                title="Accès Backend & Base de Données Firestore"
+              >
+                <Database className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
+                <span className="hidden xl:inline text-xs font-hud font-bold tracking-wide">Backend & DB</span>
+              </button>
+            )}
 
             {/* Sunday Weekly Spiritual Report Button */}
             {onOpenWeeklyReport && (

@@ -2,6 +2,7 @@ import React from 'react';
 import { ActiveTab } from '../types';
 import {
   LayoutDashboard,
+  Bot,
   BookOpen,
   Music,
   CheckSquare,
@@ -29,6 +30,7 @@ export const Navigation: React.FC<NavigationProps> = ({
 }) => {
   const tabs = [
     { id: 'dashboard' as ActiveTab, label: 'Statut', shortLabel: 'Statut', icon: LayoutDashboard },
+    { id: 'agent' as ActiveTab, label: 'Agent IA', shortLabel: 'Agent IA', icon: Bot },
     { id: 'bible' as ActiveTab, label: 'La Bible', shortLabel: 'Bible', icon: BookOpen },
     { id: 'worship' as ActiveTab, label: 'Adoration', shortLabel: 'Adoration', icon: Music },
     {

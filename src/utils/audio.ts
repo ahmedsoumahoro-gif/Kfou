@@ -34,7 +34,7 @@ export function isAudioEnabled(): boolean {
 }
 
 export function playSystemSound(
-  type: 'quest_complete' | 'level_up' | 'slash' | 'extract' | 'portal' | 'click' | 'bell' | 'chime'
+  type: 'quest_complete' | 'level_up' | 'slash' | 'extract' | 'portal' | 'click' | 'bell' | 'chime' | 'warning'
 ) {
   if (!soundEnabled) return;
   try {
@@ -42,6 +42,25 @@ export function playSystemSound(
     if (!ctx) return;
 
     const now = ctx.currentTime;
+
+    if (type === 'warning') {
+      // Cloche d'alerte solennelle d'interception (intervalle de rappel au sanctuaire)
+      const freqs = [440, 370];
+      freqs.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+        gain.gain.setValueAtTime(0.0001, now + idx * 0.12);
+        gain.gain.linearRampToValueAtTime(0.08, now + idx * 0.12 + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.12 + 0.6);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + idx * 0.12);
+        osc.stop(now + idx * 0.12 + 0.65);
+      });
+      return;
+    }
 
     if (type === 'click') {
       // Clic doux feutré de bois noble / goutte d'eau pure (ultra discret)

@@ -109,6 +109,7 @@ export interface DailyVerse {
 
 export type ActiveTab =
   | 'dashboard'
+  | 'agent'
   | 'bible'
   | 'worship'
   | 'quests'

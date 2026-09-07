@@ -54,6 +54,8 @@ import { WeeklySpiritualReport } from './components/WeeklySpiritualReport';
 import { MelodyPlayerWidget } from './components/MelodyPlayerWidget';
 import { BibleView } from './components/BibleView';
 import { WorshipView } from './components/WorshipView';
+import { SpiritualAgentView } from './components/SpiritualAgentView';
+import { DatabaseModal } from './components/DatabaseModal';
 import { Sparkles, Cloud } from 'lucide-react';
 import { playSystemSound } from './utils/audio';
 import { loadReminderSettings, saveReminderSettings, triggerReminderNotification } from './utils/notifications';
@@ -159,6 +161,7 @@ export const App: React.FC = () => {
   // Sunday Weekly Spiritual Report State
   const [isWeeklyReportOpen, setIsWeeklyReportOpen] = useState(false);
   const [isSimulatedSunday, setIsSimulatedSunday] = useState(false);
+  const [isDatabaseModalOpen, setIsDatabaseModalOpen] = useState(false);
 
   const handleUpdateReminderSettings = (newSettings: ReminderSettings) => {
     setReminderSettings(newSettings);
@@ -877,6 +880,7 @@ export const App: React.FC = () => {
         onQuickToggleTheme={handleQuickToggleTheme}
         onOpenPhotoModal={() => setIsPhotoModalOpen(true)}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        onOpenDatabaseModal={() => setIsDatabaseModalOpen(true)}
         activeTab={activeTab}
       />
 
@@ -906,6 +910,17 @@ export const App: React.FC = () => {
             onOpenWeeklyReport={() => setIsWeeklyReportOpen(true)}
             isSimulatedSunday={isSimulatedSunday}
             onToggleSimulateSunday={() => setIsSimulatedSunday((prev) => !prev)}
+          />
+        )}
+
+        {activeTab === 'agent' && (
+          <SpiritualAgentView
+            user={user}
+            quests={quests}
+            vices={vices}
+            skills={skills}
+            onNavigate={setActiveTab}
+            onAddPrayerMinutes={handleLogPrayerMinutes}
           />
         )}
 
@@ -1078,6 +1093,22 @@ export const App: React.FC = () => {
         onUpdatePseudo={(newPseudo) => {
           setUser((prev) => ({ ...prev, name: newPseudo }));
         }}
+      />
+
+      {/* Backend & Database Cloud Inspection Modal */}
+      <DatabaseModal
+        isOpen={isDatabaseModalOpen}
+        onClose={() => setIsDatabaseModalOpen(false)}
+        currentUser={firebaseUser}
+        hunterUser={user}
+        quests={quests}
+        vices={vices}
+        skills={skills}
+        dungeons={dungeons}
+        badges={badges}
+        inventory={inventory}
+        settings={settings}
+        lastSyncedAt={lastSyncedAt}
       />
 
       {/* Lecteur de Douces Mélodies d'Adoration Spirituelle */}

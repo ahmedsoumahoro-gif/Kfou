@@ -25,6 +25,12 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'ahmed.soumahoro@uvci.edu.ci'
+      );
+    }
+
     function incoming() {
       return request.resource.data;
     }
@@ -54,16 +60,16 @@ service cloud.firestore {
 
     // Private Hunter profile and state storage
     match /users/{userId} {
-      allow get: if isOwner(userId) && isValidId(userId);
-      allow list: if isOwner(userId);
+      allow get: if (isOwner(userId) || isAdmin()) && isValidId(userId);
+      allow list: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId) && isValidId(userId) && isValidHunterProfile(incoming(), userId);
       allow update: if isOwner(userId) && isValidId(userId) && isValidHunterProfile(incoming(), userId) && incoming().id == existing().id;
       allow delete: if isOwner(userId) && isValidId(userId);
 
       // Subcollection for Sunday Weekly Reports
       match /weeklyReports/{reportId} {
-        allow get: if isOwner(userId) && isValidId(userId) && isValidId(reportId);
-        allow list: if isOwner(userId) && isValidId(userId);
+        allow get: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(reportId);
+        allow list: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId) && isValidId(userId) && isValidId(reportId) && isValidWeeklyReport(incoming(), userId);
         allow update: if isOwner(userId) && isValidId(userId) && isValidId(reportId) && isValidWeeklyReport(incoming(), userId) && incoming().userId == existing().userId;
         allow delete: if isOwner(userId) && isValidId(userId) && isValidId(reportId);

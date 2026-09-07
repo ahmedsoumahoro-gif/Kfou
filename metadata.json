@@ -1,6 +1,6 @@
 {
   "name": "BloomVerse - Spiritual Leveling System",
-  "description": "Programme spirituel chrétien de sanctification et de discipline intérieure : intégration de la Sainte Bible, méditation quotidienne, mélodies douces dignes d'adoration, persévérance et croissance dans la grâce.",
+  "description": "Application de sanctification chrétienne, méditation biblique, prière et discipline spirituelle quotidienne.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

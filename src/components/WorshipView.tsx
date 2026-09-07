@@ -68,12 +68,11 @@ export const WorshipView: React.FC = () => {
               <span>SANCTUAIRE DE PRIÈRE & ADORATION</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-hud font-black tracking-wide text-white">
-              Mélodies Douces de Recueillement
+              Mélodies de Recueillement
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
-              Un espace sonore solennel et pur, dépourvu de tout bruit artificiel de jeu vidéo.
-              Ces nappes d’adoration et accords contemplatifs sont conçus pour accompagner votre
-              prière secrète, votre méditation biblique et votre intimité avec le Seigneur.
+              Nappes harmoniques et accords méditatifs pour accompagner vos temps
+              de prière secrète, de lecture biblique et de recueillement spirituel.
             </p>
           </div>
 
